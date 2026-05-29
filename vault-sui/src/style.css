@@ -1511,14 +1511,15 @@ input[type="password"]:focus {
   }
 
   .sidebar-overlay {
-    display: block;
-  }
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+}
 
-  .sidebar-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
+.sidebar-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
   .sidebar-close { display: flex; }
 
   /* Layout */
