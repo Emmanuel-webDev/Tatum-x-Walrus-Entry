@@ -161,11 +161,14 @@ async function _handleConnect(walletEntry) {
 
     _setConnecting(false);
     _setAddressDisplay(address);
+
+    // show vault immediately
+    _showScreen("vault");
+    
     _setStatus("Checking on-chain vault…");
 
     await _initRegistry();
 
-    _showScreen("vault");
     await _loadVault();
   } catch (err) {
     _setConnecting(false);
