@@ -361,6 +361,20 @@ body {
 
 .icon-btn:hover { color: var(--t1); }
 
+.decrypt-btn , .delete-btn{
+  border: 1px solid var(--border-mid);
+  color: var(--t2);
+  padding: 4px 6px;
+  border-radius: var(--r-xs);
+  font-size: 11px;
+  transition: color var(--t);
+}
+
+.btn-danger {
+  color: var(--red);
+  border: 1px solid var(--red-border);
+}
+
 /* ── Connect screen ──────────────────────────────────────────── */
 .connect-grid {
   display: grid;
@@ -566,7 +580,7 @@ body {
 .file-row-filename { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-row-size, .file-row-date { font-size: 12px; color: var(--t2); }
 .file-row-blob { font-size: 11px; color: var(--t4); }
-.file-row-actions { display: flex; gap: 6px; padding-top: 3px; }
+.file-row-actions { display: flex; margin: 0 auto; gap: 10px; padding-top: 3px; }
 
 .file-empty {
   padding: 56px 24px;

@@ -230,11 +230,26 @@ async function _loadVault() {
   _setStatus("Loading vault…");
 
   try {
+      const list = document.getElementById("doc-list");
+      const empty = document.getElementById("doc-empty"); 
+
     const entries = await fetchEntries(_registryId);
-    const currentEpoch = Number(
-      localStorage.getItem("vault_current_epoch") ?? 0,
-    );
-    _renderDocList(entries, currentEpoch);
+
+    if (!entries.length) {
+      if (list) list.innerHTML = "";
+      if (empty) {
+        empty.hidden = false;
+      }
+      return;
+    }
+
+    if (empty) {
+      empty.remove();
+    }
+
+    if (!list) return;
+
+    _renderDocList(entries);
   } catch (err) {
     _showError("Failed to load vault: " + err.message);
     console.error("[vault] _loadVault:", err);
@@ -499,7 +514,13 @@ async function _handleRetrieve(blobId, ivHex, keyB64, filename, mimeType) {
     _setRetrievePhase("decrypting", 100);
 
     _triggerDownload(plaintext, filename, mimeType);
-    _showRetrieveSuccess(filename);
+    _showRetrieveSuccess(filename); 
+
+    document.getElementById("retrieve-blob-id").value = "";
+    document.getElementById("retrieve-key").value = "";
+    document.getElementById("retrieve-iv").value = "";
+    document.getElementById("share-link-input").value = "";
+  
   } catch (err) {
     _showRetrieveError(`Unexpected error: ${err.message}`);
   }
