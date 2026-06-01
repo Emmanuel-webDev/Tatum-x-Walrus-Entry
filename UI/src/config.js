@@ -11,7 +11,7 @@ const RPC_URLS = {
 
 const CONFIG = Object.freeze({
   // ── Tatum ──────────────────────────────────────────────────────
-  TATUM_API_KEY: "t-6a1209d77f2354aab378834a-2ca600739dda44c69487caec",
+  TATUM_API_KEY: import.meta.env.VITE_TATUM_API_KEY,
 
   // ── Sui RPC ────────────────────────────────────────────────────
   SUI_RPC_MAINNET: RPC_URLS.mainnet,
@@ -25,11 +25,11 @@ const CONFIG = Object.freeze({
   // ── Walrus endpoints ───────────────────────────────────────────
   WALRUS_PUBLISHER_URL: "https://publisher.walrus-testnet.walrus.space",
   WALRUS_AGGREGATOR_URL: "https://aggregator.walrus-testnet.walrus.space",
-  WALRUS_EPOCHS: 5,
+  WALRUS_EPOCHS: 10,
 
   // ── Sui contract ───────────────────────────────────────────────
   VAULT_PACKAGE_ID:
-    "0x80ae431c248a9d89c8e3bb060a5811a2793d88ec8ff6336e0235ac41f2dc5d18",
+    import.meta.env.VITE_VAULT_PACKAGE_ID,
   VAULT_MODULE: "vault",
 
   // ── Encryption ─────────────────────────────────────────────────

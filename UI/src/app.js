@@ -805,6 +805,7 @@ function _bindUI() {
         _showScreen("connect");
         return;
       }
+      if (target === "vault") _loadVault();
       if (target === "upload") _resetUploadScreen();
       if (target === "retrieve") _prefillRetrieve({});
       _showScreen(target);
