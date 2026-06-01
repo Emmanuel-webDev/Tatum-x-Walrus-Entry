@@ -162,13 +162,9 @@ async function _handleConnect(walletEntry) {
     _setConnecting(false);
     _setAddressDisplay(address);
 
-    // show vault immediately
-    _showScreen("vault");
-    
-    _setStatus("Checking on-chain vault…");
-
     await _initRegistry();
-
+    _showScreen("vault");
+    _setStatus("Checking on-chain vault…");
     await _loadVault();
   } catch (err) {
     _setConnecting(false);
@@ -269,7 +265,10 @@ function _renderDocList(entries, currentEpoch) {
     return;
   }
 
-  if (empty) empty.hidden = true;
+  if (empty) {
+    empty.hidden = true;
+  }
+
   if (!list) return;
 
   list.innerHTML = entries
@@ -494,7 +493,7 @@ async function _handleRetrieve(blobId, ivHex, keyB64, filename, mimeType) {
       _showRetrieveError(
         "Decryption failed. The key or IV is incorrect, or this file was encrypted by a different user.",
         { icon: "🔑", fatal: false },
-      );
+      )
       return;
     }
     _setRetrievePhase("decrypting", 100);
@@ -548,6 +547,18 @@ function _showRetrieveError(message, { icon = "⚠️", fatal = false } = {}) {
       <div class="retrieve-error-msg">${esc(message)}</div>
     </div>`;
   banner.hidden = false;
+
+ let retrieveErrorTimer;
+
+ clearTimeout(retrieveErrorTimer);
+
+ retrieveErrorTimer = setTimeout(() => {
+   const banner = document.getElementById("retrieve-error-banner");
+
+   if (banner) {
+     banner.remove()
+   }
+ }, 6000);
 
   _showError(
     fatal ? "Document no longer exists on Walrus." : "Decryption failed.",
