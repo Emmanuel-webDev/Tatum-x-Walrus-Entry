@@ -1,6 +1,7 @@
 // config.js — single source of truth for all environment values.
 
 const NETWORK = "testnet";
+const SUI_CHAIN = NETWORK === "testnet" ? "sui:testnet" : "sui:mainnet";
 
 const RPC_URLS = {
   mainnet: "https://sui-mainnet.gateway.tatum.io",
@@ -20,14 +21,15 @@ const CONFIG = Object.freeze({
 
   // ── Active network ─────────────────────────────────────────────
   NETWORK,
-
+  SUI_CHAIN,
   // ── Walrus endpoints ───────────────────────────────────────────
   WALRUS_PUBLISHER_URL: "https://publisher.walrus-testnet.walrus.space",
   WALRUS_AGGREGATOR_URL: "https://aggregator.walrus-testnet.walrus.space",
-  WALRUS_EPOCHS: import.meta.env.VITE_WALRUS_EPOCHS,
+  WALRUS_EPOCHS: 10,
 
   // ── Sui contract ───────────────────────────────────────────────
-  VAULT_PACKAGE_ID: import.meta.env.VITE_VAULT_PACKAGE_ID,
+  VAULT_PACKAGE_ID:
+    import.meta.env.VITE_VAULT_PACKAGE_ID,
   VAULT_MODULE: "vault",
 
   // ── Encryption ─────────────────────────────────────────────────

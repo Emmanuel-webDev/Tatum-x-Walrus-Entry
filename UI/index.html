@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vault.Sui — Decentralized Private Document Storage</title>
+  <meta name="description" content="Encrypt files in-browser, store on Walrus, access anywhere via Sui." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- ─── Sidebar ──────────────────────────────────────────────── -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-mark">⬡</div>
+        <span class="logo-name">VAULT<span class="logo-accent">.SUI</span></span>
+      </div>
+      <button class="icon-btn sidebar-close" id="sidebar-close-btn" aria-label="Close menu">✕</button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <button class="nav-item active" data-screen="vault">
+        <span class="nav-icon">▤</span><span class="nav-label">My Vault</span>
+      </button>
+      <button class="nav-item" data-screen="upload">
+        <span class="nav-icon">↑</span><span class="nav-label">Upload</span>
+      </button>
+      <button class="nav-item" data-screen="share">
+        <span class="nav-icon">⊹</span><span class="nav-label">Share</span>
+      </button>
+      <button class="nav-item" data-screen="retrieve">
+        <span class="nav-icon">↓</span><span class="nav-label">Retrieve</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="wallet-pill" id="wallet-pill" hidden>
+        <span class="wallet-dot"></span>
+        <span class="wallet-addr" id="wallet-address-sidebar"></span>
+      </div>
+      <span class="network-badge" id="network-tag">TESTNET</span>
+    </div>
+  </aside>
+
+  <!-- ─── Overlay ──────────────────────────────────────────────── -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <!-- ─── Layout ───────────────────────────────────────────────── -->
+  <div class="layout">
+
+    <!-- Topbar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="icon-btn hamburger" id="hamburger-btn" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="logo logo-mobile">
+          <div class="logo-mark">⬡</div>
+          <span class="logo-name">VAULT<span class="logo-accent">.SUI</span></span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <span class="network-badge" id="network-tag-mobile">TESTNET</span>
+        <div class="wallet-pill topbar-wallet" id="wallet-pill-topbar" hidden>
+          <span class="wallet-dot"></span>
+          <span class="wallet-addr" id="wallet-address-top"></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="main">
+
+      <!-- ═══════════════════════════════════════════════════
+           SCREEN: Connect
+      ═══════════════════════════════════════════════════ -->
+      <section id="screen-connect" class="screen">
+        <div class="page-header">
+          <h1 class="page-title">Connect Wallet</h1>
+          <p class="page-sub">Your vault lives on Sui. No account, no email, no password.</p>
+        </div>
+
+        <div class="connect-grid">
+          <div class="connect-main">
+            <div id="wallet-list" class="wallet-list">
+              <div class="wallet-scanning">
+                <span class="scan-dot"></span> Scanning for wallets…
+              </div>
+            </div>
+            <p id="connect-status" class="connect-status" hidden></p>
+            <div class="connect-footer">
+              <span>Got a share link?</span>
+              <button class="btn btn-sm btn-outline" id="paste-link-btn">Paste & Decrypt</button>
+            </div>
+          </div>
+
+          <div class="connect-features">
+            <div class="feature-card">
+              <div class="feature-icon">🔐</div>
+              <div class="feature-text">
+                <strong>Zero-knowledge storage</strong>
+                <p>AES-256-GCM encryption happens in your browser. Keys never touch any server.</p>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⛓️</div>
+              <div class="feature-text">
+                <strong>Metadata on Sui</strong>
+                <p>File registry stored on-chain. Access your vault from any browser with your wallet.</p>
+              </div>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">☁️</div>
+              <div class="feature-text">
+                <strong>Blobs on Walrus</strong>
+                <p>Encrypted files stored on the Walrus decentralized storage network.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           SCREEN: Vault
+      ═══════════════════════════════════════════════════ -->
+      <section id="screen-vault" class="screen" hidden>
+        <div class="page-header page-header-row">
+          <div>
+            <h1 class="page-title">My Vault</h1>
+            <p class="page-sub">Encrypted documents stored on Walrus, indexed on Sui</p>
+          </div>
+          <div class="header-actions">
+            <button class="btn btn-outline btn-sm" id="retrieve-nav-btn">↓ Retrieve</button>
+            <button class="btn btn-primary" id="upload-nav-btn">↑ Upload File</button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num" id="doc-count">0</div>
+            <div class="stat-label">Files</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="total-size-num">—</div>
+            <div class="stat-label">Total Size</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num mono">AES-256</div>
+            <div class="stat-label">Encryption</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num mono">Walrus</div>
+            <div class="stat-label">Storage</div>
+          </div>
+        </div>
+
+        <!-- File table -->
+        <div class="file-table">
+          <div class="file-table-head">
+            <span>Filename</span>
+            <span>Size</span>
+            <span>Uploaded</span>
+            <span>Blob ID</span>
+            <span></span>
+          </div>
+          <div id="doc-list" class="file-table-body"></div>
+          <div id="doc-empty" class="file-empty" hidden>
+            <div class="file-empty-icon">▤</div>
+            <div class="file-empty-title">Vault is empty</div>
+            <div class="file-empty-sub">Upload your first encrypted file to get started.</div>
+            <button class="btn btn-primary" id="upload-empty-btn">↑ Upload File</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           SCREEN: Upload
+      ═══════════════════════════════════════════════════ -->
+      <section id="screen-upload" class="screen" hidden>
+        <div class="page-header page-header-row">
+          <div>
+            <h1 class="page-title">Upload Document</h1>
+            <p class="page-sub">Encrypt in-browser, upload to Walrus, register on Sui</p>
+          </div>
+          <button class="btn btn-outline btn-sm back-to-vault-btn">← Back</button>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <!-- Drop zone -->
+            <div id="upload-drop-section">
+              <div id="drop-zone" class="drop-zone" role="button" tabindex="0">
+                <div class="drop-icon">↑</div>
+                <div class="drop-title">Drop file here or click to browse</div>
+                <div class="drop-sub">Any format — PDF, images, video, documents</div>
+              </div>
+              <input type="file" id="file-input" hidden />
+            </div>
+
+            <!-- Progress -->
+            <div id="upload-progress-section" hidden>
+              <div class="progress-card">
+                <div class="progress-icon" id="upload-progress-emoji">🔐</div>
+                <div class="progress-body">
+                  <div class="progress-label" id="upload-phase-label">Encrypting…</div>
+                  <div class="progress-sub" id="upload-filename"></div>
+                  <div class="progress-track">
+                    <div class="progress-bar" id="upload-progress-bar"></div>
+                  </div>
+                  <div class="progress-pct" id="upload-progress-pct">0%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success -->
+            <div id="upload-success-section" hidden>
+              <div class="success-banner">
+                <div class="success-icon">✓</div>
+                <div>
+                  <div class="success-title">Stored Securely</div>
+                  <div class="success-sub" id="success-filename"></div>
+                </div>
+              </div>
+
+              <div class="result-stack">
+                <div class="result-card result-accent">
+                  <div class="result-label">Walrus Blob ID</div>
+                  <div class="result-value mono" id="success-blob-id"></div>
+                  <button class="result-copy" data-copy="success-blob-id">Copy</button>
+                </div>
+
+                <div class="result-card result-warn">
+                  <div class="result-label">⚠ Decryption Key — save this</div>
+                  <div class="result-value mono" id="success-key"></div>
+                  <div class="result-note">IV: <span class="mono" id="success-iv"></span></div>
+                  <button class="result-copy" id="copy-key-btn" data-copy="success-key">Copy Key</button>
+                </div>
+
+                <div class="result-card result-blue">
+                  <div class="result-label">Share Link</div>
+                  <div class="result-value mono small" id="success-share-link"></div>
+                  <button class="result-copy" id="copy-share-btn" data-copy="success-share-link">Copy Link</button>
+                </div>
+              </div>
+
+              <div class="action-row">
+                <button class="btn btn-primary" id="go-share-btn">Go to Share →</button>
+                <button class="btn btn-outline back-to-vault-btn">← Back to Vault</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Steps sidebar -->
+          <div class="steps-card">
+            <div class="steps-title">How it works</div>
+            <div class="step-list">
+              <div class="step"><span class="step-num">1</span><span>File encrypted with AES-256-GCM in your browser</span></div>
+              <div class="step"><span class="step-num">2</span><span>Encrypted blob uploaded to Walrus</span></div>
+              <div class="step"><span class="step-num">3</span><span>Metadata registered on Sui blockchain (wallet approval)</span></div>
+              <div class="step"><span class="step-num">4</span><span>Blob ID + key shown — save or share the link</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           SCREEN: Share
+      ═══════════════════════════════════════════════════ -->
+      <section id="screen-share" class="screen" hidden>
+        <div class="page-header page-header-row">
+          <div>
+            <h1 class="page-title">Share Document</h1>
+            <p class="page-sub">Build a secure share link from any blob ID + key</p>
+          </div>
+          <button class="btn btn-outline btn-sm back-to-vault-btn">← Back</button>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <div class="form-card">
+              <div class="form-card-title">Build share link</div>
+              <div class="field">
+                <label class="field-label">Blob ID</label>
+                <input type="text" id="share-blob-id" placeholder="Walrus Blob ID…" />
+              </div>
+              <div class="field">
+                <label class="field-label">IV (hex)</label>
+                <input type="text" id="share-iv" placeholder="24 hex characters…" />
+              </div>
+              <div class="field">
+                <label class="field-label">Decryption Key</label>
+                <input type="text" id="share-key" placeholder="base64url key…" />
+              </div>
+              <button class="btn btn-primary btn-block" id="build-share-btn">Generate Link</button>
+            </div>
+
+            <div id="share-result" hidden style="margin-top:16px;">
+              <div class="result-card result-blue">
+                <div class="result-label">Share Link</div>
+                <div class="result-value mono small" id="share-link-output"></div>
+                <button class="result-copy" id="copy-generated-share-btn">Copy</button>
+              </div>
+              <div class="warn-panel">
+                <div class="warn-title">⚠ Security Note</div>
+                <div class="warn-body">Anyone with this link can decrypt the file. The key is in the URL fragment — never sent to any server. Share only over secure channels.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="steps-card">
+            <div class="steps-title">How share links work</div>
+            <div class="step-list">
+              <div class="step"><span class="step-num">🔗</span><span>The link encodes Blob ID + key in the URL <strong>#fragment</strong></span></div>
+              <div class="step"><span class="step-num">🚫</span><span>Fragments are never sent to any server — only parsed in the recipient's browser</span></div>
+              <div class="step"><span class="step-num">🔓</span><span>Recipient pastes link → blob fetched → decrypted locally → downloaded</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════════════
+           SCREEN: Retrieve
+      ═══════════════════════════════════════════════════ -->
+      <section id="screen-retrieve" class="screen" hidden>
+        <div class="page-header page-header-row">
+          <div>
+            <h1 class="page-title">Retrieve & Decrypt</h1>
+            <p class="page-sub">Fetch and decrypt a file from Walrus</p>
+          </div>
+          <button class="btn btn-outline btn-sm back-to-vault-btn">← Back</button>
+        </div>
+
+        <div class="two-col">
+          <div>
+            <!-- Form -->
+            <div id="retrieve-form-section">
+              <div class="paste-link-card">
+                <div class="paste-link-label">Paste Share Link</div>
+                <input type="text" id="share-link-input" placeholder="vault.app/#blobId:ivHex:keyB64:filename:mime" />
+              </div>
+
+              <div class="or-divider">or enter manually</div>
+
+              <div class="field">
+                <label class="field-label">Blob ID</label>
+                <input type="text" id="retrieve-blob-id" placeholder="Walrus Blob ID…" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label class="field-label">IV (hex)</label>
+                <input type="text" id="retrieve-iv" placeholder="24 hex characters…" autocomplete="off" />
+              </div>
+              <div class="field">
+                <label class="field-label">Decryption Key</label>
+                <input type="password" id="retrieve-key" placeholder="base64url key…" autocomplete="off" />
+              </div>
+
+              <input type="hidden" id="retrieve-filename" value="decrypted_file" />
+              <input type="hidden" id="retrieve-mime" value="application/octet-stream" />
+
+              <button class="btn btn-primary btn-block" id="decrypt-btn">Fetch & Decrypt →</button>
+            </div>
+
+            <!-- Progress -->
+            <div id="retrieve-progress-section" hidden>
+              <div class="progress-card">
+                <div class="progress-icon">☁️</div>
+                <div class="progress-body">
+                  <div class="progress-label" id="retrieve-phase-label">Fetching…</div>
+                  <div class="progress-track">
+                    <div class="progress-bar" id="retrieve-progress-bar"></div>
+                  </div>
+                  <div class="progress-pct" id="retrieve-progress-pct">0%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success -->
+            <div id="retrieve-success-section" hidden>
+              <div class="success-banner">
+                <div class="success-icon">🔓</div>
+                <div>
+                  <div class="success-title">Decryption Successful</div>
+                  <div class="success-sub" id="retrieve-success-filename"></div>
+                </div>
+              </div>
+              <div class="result-card result-accent" style="margin-top:14px;">
+                <div class="result-label">Download started</div>
+                <div style="font-size:13px;opacity:.7;">Your file was decrypted in-browser and the download has started.</div>
+              </div>
+              <div class="action-row" style="margin-top:14px;">
+                <button class="btn btn-outline back-to-vault-btn">← Back to Vault</button>
+                <button class="btn btn-outline" id="retrieve-again-btn">Decrypt Another</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="steps-card">
+            <div class="steps-title">Retrieve flow</div>
+            <div class="step-list">
+              <div class="step"><span class="step-num">1</span><span>Paste share link or enter Blob ID + key manually</span></div>
+              <div class="step"><span class="step-num">2</span><span>Encrypted blob fetched from Walrus aggregator</span></div>
+              <div class="step"><span class="step-num">3</span><span>Decrypted in your browser — server never sees plaintext</span></div>
+              <div class="step"><span class="step-num">4</span><span>File downloaded directly to your device</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ─── Toasts ────────────────────────────────────────────────── -->
+  <div id="error-toast" hidden role="alert"></div>
+  <div id="toast" role="status"></div>
+
+  <!-- ─── Boot ─────────────────────────────────────────────────── -->
+  <script type="module">
+    import { init } from "./src/app.js";
+    document.addEventListener("DOMContentLoaded", init);
+  </script>
+</body>
+</html>
