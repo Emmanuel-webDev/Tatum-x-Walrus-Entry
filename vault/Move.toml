@@ -1,0 +1,7 @@
+[package]
+name = "vault"
+version = "0.1.0"
+edition = "2024.beta"
+
+[addresses]
+vault = "0x31761f38839773bd0c1257e06b94bd705ca1aca163f63d76d6b8a893ee18af02" 
