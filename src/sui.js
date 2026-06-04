@@ -13,8 +13,20 @@
 //   • tx.object(id)                — for object args (&mut T, &T, owned T)
 //   • Clock shared object is always "0x6"
 //   • Wallet signing: sui:signAndExecuteTransaction (new) with fallback to old
-
+import { SuiGrpcClient } from "@mysten/sui/grpc";
+import { WalrusClient } from "@mysten/walrus";
 import CONFIG from "./config.js";
+
+
+const client = new SuiGrpcClient({
+  network: "testnet",
+  baseUrl: "https://fullnode.testnet.sui.io:443",
+});
+
+const _walrusClient = new WalrusClient({
+  network: "testnet",
+  suiClient: client,
+});
 
 // ── Sui SDK CDN ───────────────────────────────────────────────────────────────
 // Official @mysten/sui package via esm.run CDN (no bundler required)
@@ -222,8 +234,8 @@ async function _fetchEntry(tableId, blobId) {
 
 export async function getCurrentEpoch() {
   try {
-    const result = await rpc("suix_getLatestSuiSystemState", []);
-    const epoch = Number(result?.epoch ?? 0);
+    const state = await _walrusClient.systemState();
+    const epoch = state.committee.epoch;
     if (epoch) localStorage.setItem("vault_current_epoch", String(epoch));
     return epoch;
   } catch {

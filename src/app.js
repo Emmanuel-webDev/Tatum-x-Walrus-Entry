@@ -229,6 +229,9 @@ async function _loadVault() {
   if (!_registryId) return;
   _setStatus("Loading vault…");
 
+  const currentEpoch = localStorage.getItem("vault_current_epoch");
+  console.log("[vault] Loading entries for registry", _registryId, "at epoch", currentEpoch);
+
   try {
       const list = document.getElementById("doc-list");
       const empty = document.getElementById("doc-empty"); 
