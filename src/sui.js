@@ -216,7 +216,7 @@ async function _fetchEntry(tableId, blobId) {
       return null;
     }
 
-    const { ivHex } = getIV(blobId);
+    const  ivHex  = getIV(blobId);
     return {
       blobId: String(raw.blob_id ?? blobId),
       filename: String(raw.filename ?? "Unknown"),
