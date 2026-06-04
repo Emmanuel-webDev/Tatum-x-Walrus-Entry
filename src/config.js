@@ -28,8 +28,7 @@ const CONFIG = Object.freeze({
   WALRUS_EPOCHS: 10,
 
   // ── Sui contract ───────────────────────────────────────────────
-  VAULT_PACKAGE_ID:
-    import.meta.env.VITE_VAULT_PACKAGE_ID,
+  VAULT_PACKAGE_ID: import.meta.env.VITE_VAULT_PACKAGE_ID,
   VAULT_MODULE: "vault",
 
   // ── Encryption ─────────────────────────────────────────────────

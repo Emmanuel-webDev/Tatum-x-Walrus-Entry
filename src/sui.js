@@ -216,13 +216,15 @@ async function _fetchEntry(tableId, blobId) {
       return null;
     }
 
+    const { ivHex } = getIV(blobId);
     return {
       blobId: String(raw.blob_id ?? blobId),
       filename: String(raw.filename ?? "Unknown"),
       mimeType: String(raw.mime_type ?? "application/octet-stream"),
+      endEpoch: Number(raw.end_epoch ?? 0),
       sizeBytes: Number(raw.size_bytes ?? 0),
       uploadedAt: Number(raw.uploaded_at ?? 0),
-      ivHex: getIV(blobId), // from localStorage
+      ivHex
     };
   } catch (err) {
     console.warn(`[sui] Failed to fetch entry for ${blobId}:`, err.message);
@@ -277,24 +279,25 @@ export async function buildCreateRegistryTx() {
  *             size_bytes: u64, clock: &Clock, ctx: &mut TxContext)
  *
  * @param {string} registryId
- * @param {{ blobId: string, filename: string, mimeType: string, sizeBytes: number }} entry
+ * @param {{ blobId: string, filename: string, mimeType: string, sizeBytes: number, endEpoch: number }} entry
  */
+
 export async function buildAddEntryTx(registryId, entry) {
   const Transaction = await _loadTransaction();
   const tx = new Transaction();
   const enc = new TextEncoder();
-
-  tx.moveCall({
-    target: `${CONFIG.VAULT_PACKAGE_ID}::${CONFIG.VAULT_MODULE}::add_entry`,
-    arguments: [
-      tx.object(registryId), // &mut VaultRegistry
-      tx.pure.vector("u8", enc.encode(entry.blobId)), // blob_id: vector<u8>
-      tx.pure.vector("u8", enc.encode(entry.filename)), // filename: vector<u8>
-      tx.pure.vector("u8", enc.encode(entry.mimeType)), // mime_type: vector<u8>
-      tx.pure.u64(entry.sizeBytes), // size_bytes: u64
-      tx.object("0x6"), // clock: &Clock
-    ],
-  });
+ tx.moveCall({
+   target: `${CONFIG.VAULT_PACKAGE_ID}::${CONFIG.VAULT_MODULE}::add_entry`,
+   arguments: [
+     tx.object(registryId),
+     tx.pure.vector("u8", enc.encode(entry.blobId)),
+     tx.pure.vector("u8", enc.encode(entry.filename)),
+     tx.pure.vector("u8", enc.encode(entry.mimeType)),
+     tx.pure.u64(entry.sizeBytes), // ← size_bytes first
+     tx.pure.u64(entry.endEpoch), // ← end_epoch second
+     tx.object("0x6"),
+   ],
+ });
 
   tx.setGasBudget(20_000_000);
   return tx;

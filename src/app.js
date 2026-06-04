@@ -229,12 +229,11 @@ async function _loadVault() {
   if (!_registryId) return;
   _setStatus("Loading vault…");
 
-  const currentEpoch = localStorage.getItem("vault_current_epoch");
-  console.log("[vault] Loading entries for registry", _registryId, "at epoch", currentEpoch);
+  const currentEpoch = await getCurrentEpoch();
 
   try {
-      const list = document.getElementById("doc-list");
-      const empty = document.getElementById("doc-empty"); 
+    const list = document.getElementById("doc-list");
+    const empty = document.getElementById("doc-empty");
 
     const entries = await fetchEntries(_registryId);
 
@@ -252,7 +251,7 @@ async function _loadVault() {
 
     if (!list) return;
 
-    _renderDocList(entries);
+    _renderDocList(entries, currentEpoch);
   } catch (err) {
     _showError("Failed to load vault: " + err.message);
     console.error("[vault] _loadVault:", err);
@@ -293,6 +292,37 @@ function _renderDocList(entries, currentEpoch) {
     .map((e) => {
       const ext = _fileExt(e.mimeType, e.filename);
       const hasIV = !!e.ivHex;
+
+      const epochsLeft =
+        e.endEpoch && currentEpoch
+          ? Math.max(0, e.endEpoch - currentEpoch)
+          : null;
+
+      // On testnet 1 epoch = 1 day, mainnet = 14 days
+      const EPOCH_DURATION_DAYS = 1;
+      const daysLeft =
+        epochsLeft !== null ? epochsLeft * EPOCH_DURATION_DAYS : null;
+
+      const epochClass =
+        epochsLeft === null
+          ? "epoch-unknown"
+          : epochsLeft === 0
+            ? "epoch-danger"
+            : epochsLeft <= 3
+              ? "epoch-warning"
+              : "epoch-safe";
+
+      const timeLabel =
+        daysLeft === null
+          ? "Unknown expiry"
+          : daysLeft === 0
+            ? "Expired"
+            : daysLeft === 1
+              ? "Expires tomorrow"
+              : daysLeft < 1
+                ? "Expires today"
+                : `${daysLeft}d left`;
+
       return `
     <div class="file-row" data-blob="${esc(e.blobId)}">
       <div class="file-row-name">
@@ -302,6 +332,18 @@ function _renderDocList(entries, currentEpoch) {
       <div class="file-row-size">${formatBytes(e.sizeBytes)}</div>
       <div class="file-row-date">${timeAgo(e.uploadedAt)}</div>
       <div class="file-row-blob mono">${truncate(e.blobId)}</div>
+      <div class="file-row-epoch">
+  <span class="epoch-pill ${epochClass}" title="Epoch ${currentEpoch} now · ends epoch ${e.endEpoch ?? "?"}">
+    ⏱ ${timeLabel}
+  </span>
+  <span class="epoch-num">
+    ${
+      epochsLeft !== null
+        ? ` · ends #${e.endEpoch}`
+        : "No expiry data"
+    }
+  </span>
+</div>
       <div class="file-row-actions">
         <button class="btn btn-ghost btn-sm decrypt-btn"
           data-blob="${esc(e.blobId)}"
@@ -397,6 +439,7 @@ async function _handleUpload(file) {
       blobId,
       filename: file.name,
       mimeType: file.type || "application/octet-stream",
+      endEpoch,
       sizeBytes: file.size,
     });
     await executeTransaction(_wallet, _account, tx);
@@ -511,19 +554,18 @@ async function _handleRetrieve(blobId, ivHex, keyB64, filename, mimeType) {
       _showRetrieveError(
         "Decryption failed. The key or IV is incorrect, or this file was encrypted by a different user.",
         { icon: "🔑", fatal: false },
-      )
+      );
       return;
     }
     _setRetrievePhase("decrypting", 100);
 
     _triggerDownload(plaintext, filename, mimeType);
-    _showRetrieveSuccess(filename); 
+    _showRetrieveSuccess(filename);
 
     document.getElementById("retrieve-blob-id").value = "";
     document.getElementById("retrieve-key").value = "";
     document.getElementById("retrieve-iv").value = "";
     document.getElementById("share-link-input").value = "";
-  
   } catch (err) {
     _showRetrieveError(`Unexpected error: ${err.message}`);
   }
@@ -572,17 +614,17 @@ function _showRetrieveError(message, { icon = "⚠️", fatal = false } = {}) {
     </div>`;
   banner.hidden = false;
 
- let retrieveErrorTimer;
+  let retrieveErrorTimer;
 
- clearTimeout(retrieveErrorTimer);
+  clearTimeout(retrieveErrorTimer);
 
- retrieveErrorTimer = setTimeout(() => {
-   const banner = document.getElementById("retrieve-error-banner");
+  retrieveErrorTimer = setTimeout(() => {
+    const banner = document.getElementById("retrieve-error-banner");
 
-   if (banner) {
-     banner.remove()
-   }
- }, 6000);
+    if (banner) {
+      banner.remove();
+    }
+  }, 6000);
 
   _showError(
     fatal ? "Document no longer exists on Walrus." : "Decryption failed.",
