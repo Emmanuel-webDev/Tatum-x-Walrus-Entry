@@ -230,6 +230,7 @@ async function _loadVault() {
   _setStatus("Loading vault…");
 
   const currentEpoch = await getCurrentEpoch();
+  console.log("[vault] current epoch:", currentEpoch);
 
   try {
     const list = document.getElementById("doc-list");
@@ -321,7 +322,7 @@ function _renderDocList(entries, currentEpoch) {
               ? "Expires tomorrow"
               : daysLeft < 1
                 ? "Expires today"
-                : `${daysLeft}d left`;
+                : `${daysLeft}days left to expire`;
 
       return `
     <div class="file-row" data-blob="${esc(e.blobId)}">
@@ -336,13 +337,7 @@ function _renderDocList(entries, currentEpoch) {
   <span class="epoch-pill ${epochClass}" title="Epoch ${currentEpoch} now · ends epoch ${e.endEpoch ?? "?"}">
     ⏱ ${timeLabel}
   </span>
-  <span class="epoch-num">
-    ${
-      epochsLeft !== null
-        ? ` · ends #${e.endEpoch}`
-        : "No expiry data"
-    }
-  </span>
+  
 </div>
       <div class="file-row-actions">
         <button class="btn btn-ghost btn-sm decrypt-btn"
