@@ -33,6 +33,9 @@ import {
   saveIV,
   deleteIV,
   getIV,
+  _suiClient,
+  _walrusClient,
+  renewBlobStorage,
 } from "./sui.js";
 import { formatBytes, truncate, timeAgo, mimeToExt, esc } from "./utils.js";
 import CONFIG from "./config.js";
@@ -230,7 +233,6 @@ async function _loadVault() {
   _setStatus("Loading vault…");
 
   const currentEpoch = await getCurrentEpoch();
-  console.log("[vault] current epoch:", currentEpoch);
 
   try {
     const list = document.getElementById("doc-list");
@@ -293,6 +295,7 @@ function _renderDocList(entries, currentEpoch) {
     .map((e) => {
       const ext = _fileExt(e.mimeType, e.filename);
       const hasIV = !!e.ivHex;
+      const isOwner = e.ownerAddress === _address || !e.ownerAddress;
 
       const epochsLeft =
         e.endEpoch && currentEpoch
@@ -348,6 +351,13 @@ function _renderDocList(entries, currentEpoch) {
           ${!hasIV ? 'title="IV not cached — use share link"' : ""}>
           Decrypt
         </button>
+
+        <button class="btn btn-renew btn-sm renew-btn"
+  data-blob-object-id="${esc(e.blobObjectId)}"
+  ${!isOwner ? 'disabled title="You are not the owner of this blob"' : ""}>
+  ↻ Renew
+</button>
+
         <button class="btn btn-danger btn-sm delete-btn"
           data-blob="${esc(e.blobId)}">✕</button>
       </div>
@@ -366,6 +376,84 @@ function _renderDocList(entries, currentEpoch) {
         filename: name,
         mimeType: mime,
       });
+    });
+  });
+
+  list.querySelectorAll(".renew-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      const blobObjectId = btn.dataset.blobObjectId;
+      console.log("blobObjectId being used for renew:", blobObjectId);
+
+      if (!blobObjectId) {
+        _showError(
+          "This file was uploaded before blob object tracking was added.",
+        );
+        return;
+      }
+
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = "Renewing...";
+
+      const obj = await _walrusClient.getBlobObject({
+        blobObjectId: btn.dataset.blobObjectId,
+      });
+      console.log("blob object:", JSON.stringify(obj, null, 2));
+
+      try {
+        const walletSigner = {
+          toSuiAddress: () => _address,
+
+          signTransaction: async ({ transaction }) => {
+            const feature = _wallet.features["sui:signTransaction"];
+
+            transaction.setSender(_address);
+
+            console.log(_wallet.accounts);
+
+            return await feature.signTransaction({
+              transaction,
+              account: _wallet.accounts[0],
+            });
+          },
+
+          signAndExecuteTransaction: async ({ transaction, client }) => {
+            transaction.setSender(_address);
+
+            // Required for Walrus CoinWithBalance intents
+            await transaction.build({ client });
+
+            const result = await _wallet.features[
+              "sui:signAndExecuteTransaction"
+            ].signAndExecuteTransaction({
+              transaction,
+              account: _account,
+              chain: "sui:testnet",
+            });
+
+            return {
+              Transaction: result,
+            };
+          },
+        };
+
+        await _walrusClient.extendBlob({
+          blobObjectId,
+          epochs: CONFIG.WALRUS_EPOCHS,
+          signer: walletSigner,
+        });
+
+      
+        const blobObject = await _walrusClient.getBlobObject({ blobObjectId });
+        console.log("blob after renewal:", JSON.stringify(blobObject, null, 2));
+
+        _toast("Storage renewed successfully");
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+        await _loadVault();
+      } catch (err) {
+        console.error("Renewal failed:", err);
+        _showError("Failed to renew storage: " + err.message);
+      }
     });
   });
 
@@ -402,7 +490,6 @@ function _fileExt(mime, filename) {
 }
 
 // ── Upload ────────────────────────────────────────────────────────────────────
-
 async function _handleUpload(file) {
   if (!_registryId) {
     _showError("Vault not ready. Please reconnect.");
@@ -420,21 +507,66 @@ async function _handleUpload(file) {
 
     // 2 — Upload to Walrus
     _setUploadPhase("uploading", 0);
-    const { blobId, endEpoch } = await uploadToWalrus(
-      ciphertext,
-      CONFIG.WALRUS_EPOCHS,
-      (loaded, total) =>
-        _setUploadPhase("uploading", Math.round((loaded / total) * 100)),
-    );
+
+    const walletSigner = {
+      toSuiAddress: () => _address,
+
+      signTransaction: async ({ transaction }) => {
+        const feature = _wallet.features["sui:signTransaction"];
+
+        transaction.setSender(_address);
+
+        console.log(_wallet.accounts);
+
+        return await feature.signTransaction({
+          transaction,
+          account: _wallet.accounts[0],
+        });
+      },
+
+      signAndExecuteTransaction: async ({ transaction, client }) => {
+        transaction.setSender(_address);
+
+        // Required for Walrus CoinWithBalance intents
+        await transaction.build({ client });
+
+        const result = await _wallet.features[
+          "sui:signAndExecuteTransaction"
+        ].signAndExecuteTransaction({
+          transaction,
+          account: _account,
+          chain: "sui:testnet",
+        });
+
+        return {
+          Transaction: result,
+        };
+      },
+    };
+
+    const { blobId, blobObject, endEpoch } = await _walrusClient.writeBlob({
+      blob: ciphertext,
+      deletable: false,
+      epochs: CONFIG.WALRUS_EPOCHS,
+      signer: walletSigner,
+      owner: _address, // blob object transferred to connected wallet
+    });
+
+    console.log("Walrus upload response:", { blobId, blobObject, endEpoch });
+
+    const blobObjectId = blobObject?.id ?? null;
+    const epochEnd = blobObject?.storage?.end_epoch ?? null;
+
     _setUploadPhase("uploading", 100);
 
     // 3 — Register on Sui chain
     _setUploadPhase("registering", 0);
     const tx = await buildAddEntryTx(_registryId, {
       blobId,
+      blobObjectId,
       filename: file.name,
       mimeType: file.type || "application/octet-stream",
-      endEpoch,
+      endEpoch: epochEnd,
       sizeBytes: file.size,
     });
     await executeTransaction(_wallet, _account, tx);
