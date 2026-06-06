@@ -6,7 +6,7 @@
    Font: Space Mono (data identity) + Syne (display) + DM Sans (body)
    ═══════════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Press+Start+2P&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
 
 /* ── Reset ─────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -59,7 +59,7 @@
 
   /* Typography */
   --font-ui:        'DM Sans', sans-serif;
-  --font-display:   'Syne', sans-serif;
+  --font-display:   'Press Start 2P', monospace;
   --font-mono:      'Space Mono', 'Courier New', monospace;
 
   /* Layout */
@@ -157,11 +157,12 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .logo-name {
   font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   color: var(--white);
   text-transform: uppercase;
+  line-height: 1.4;
 }
 
 .logo-accent { color: var(--mint); }
@@ -401,12 +402,12 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: -0.025em;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
   color: var(--white);
-  line-height: 1.1;
-  margin-bottom: 5px;
+  line-height: 1.6;
+  margin-bottom: 10px;
 }
 
 .page-sub {
@@ -725,12 +726,12 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .stat-num {
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 400;
   color: var(--white);
-  letter-spacing: -0.025em;
-  line-height: 1;
-  margin-bottom: 6px;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  margin-bottom: 8px;
 }
 
 .stat-num.mono {
@@ -761,7 +762,7 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .file-table-head {
   display: grid;
-  grid-template-columns: 2fr 80px 100px 160px 130px 170px;
+  grid-template-columns: 2fr 80px 100px 140px 150px 210px;
   padding: 10px 20px;
   background: var(--bg-raised);
   border-bottom: 1px solid var(--line);
@@ -774,7 +775,7 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .file-row {
   display: grid;
-  grid-template-columns: 2fr 80px 100px 160px 130px 170px;
+  grid-template-columns: 2fr 80px 100px 140px 150px 210px;
   padding: 13px 20px;
   border-bottom: 1px solid var(--line);
   align-items: center;
@@ -870,8 +871,9 @@ input, textarea, select { font-family: var(--font-ui); }
 .file-row-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   justify-content: flex-end;
+  flex-wrap: nowrap;
 }
 
 .file-empty {
@@ -888,10 +890,11 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .file-empty-title {
   font-family: var(--font-display);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 400;
   color: var(--white);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.7;
 }
 
 .file-empty-sub {
@@ -1071,9 +1074,10 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .success-title {
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 400;
   color: var(--white);
+  line-height: 1.7;
 }
 .success-sub { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 
@@ -1215,13 +1219,14 @@ input, textarea, select { font-family: var(--font-ui); }
 
 .form-card-title {
   font-family: var(--font-display);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 400;
   color: var(--white);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.06em;
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+  line-height: 1.7;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1475,7 +1480,7 @@ input::placeholder {
 
   .file-table-head,
   .file-row {
-    grid-template-columns: 2fr 80px 100px 120px 100px 140px;
+    grid-template-columns: 2fr 70px 90px 110px 130px 180px;
   }
 }
 
@@ -1504,7 +1509,7 @@ input::placeholder {
 @media (max-width: 768px) {
   .main { padding: 18px 16px 56px; }
 
-  .page-title { font-size: 22px; }
+  .page-title { font-size: 12px; }
 
   .page-header-row {
     flex-direction: column;
@@ -1569,7 +1574,7 @@ input::placeholder {
   .stat-num { font-size: 18px; }
   .stat-num.mono { font-size: 11px; }
 
-  .page-title { font-size: 19px; }
+  .page-title { font-size: 10px; }
 
   .btn { padding: 7px 14px; font-size: 11px; }
   .btn-sm { padding: 5px 10px; }
