@@ -107,23 +107,30 @@ function _parseUploadResponse(text) {
   let json;
   try {
     json = JSON.parse(text);
+    console.log("[walrus upload]", json);
   } catch {
     throw new Error(`Walrus returned non-JSON: ${text.slice(0, 200)}`);
   }
 
   // Shape 1: newly created blob
-  if (json.newlyCreated) {
-    const obj = json.newlyCreated.blobObject;
-    return {
-      blobId: obj.blobId,
-      endEpoch: obj.storage?.endEpoch ?? null,
-    };
-  }
+ if (json.newlyCreated) {
+   const obj = json.newlyCreated.blobObject;
+
+   return {
+     blobId: obj.blobId,
+     blobObjectId: obj.id,
+     endEpoch: obj.storage?.endEpoch ?? null,
+   };
+ }
 
   // Shape 2: already certified (same bytes already stored)
   if (json.alreadyCertified) {
+
+    console.log("[walrus alreadyCertified]", json.alreadyCertified);
+
     return {
       blobId: json.alreadyCertified.blobId,
+      blobObjectId: null,
       endEpoch: json.alreadyCertified.endEpoch ?? null,
     };
   }

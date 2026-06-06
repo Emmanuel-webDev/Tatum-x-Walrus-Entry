@@ -18,14 +18,16 @@ import { WalrusClient } from "@mysten/walrus";
 import CONFIG from "./config.js";
 
 
-const client = new SuiGrpcClient({
+export const _suiClient = new SuiGrpcClient({
   network: "testnet",
   baseUrl: "https://fullnode.testnet.sui.io:443",
 });
 
-const _walrusClient = new WalrusClient({
+export const _walrusClient = new WalrusClient({
   network: "testnet",
-  suiClient: client,
+  suiClient: _suiClient,
+  aggregatorUrl: CONFIG.WALRUS_AGGREGATOR_URL,
+  publisherUrl: CONFIG.WALRUS_PUBLISHER_URL,
 });
 
 // ── Sui SDK CDN ───────────────────────────────────────────────────────────────
@@ -219,12 +221,13 @@ async function _fetchEntry(tableId, blobId) {
     const  ivHex  = getIV(blobId);
     return {
       blobId: String(raw.blob_id ?? blobId),
+      blobObjectId: String(raw.blob_object_id ?? ""),
       filename: String(raw.filename ?? "Unknown"),
       mimeType: String(raw.mime_type ?? "application/octet-stream"),
       endEpoch: Number(raw.end_epoch ?? 0),
       sizeBytes: Number(raw.size_bytes ?? 0),
       uploadedAt: Number(raw.uploaded_at ?? 0),
-      ivHex
+      ivHex,
     };
   } catch (err) {
     console.warn(`[sui] Failed to fetch entry for ${blobId}:`, err.message);
@@ -291,10 +294,11 @@ export async function buildAddEntryTx(registryId, entry) {
    arguments: [
      tx.object(registryId),
      tx.pure.vector("u8", enc.encode(entry.blobId)),
+     tx.pure.vector("u8", enc.encode(entry.blobObjectId)),
      tx.pure.vector("u8", enc.encode(entry.filename)),
      tx.pure.vector("u8", enc.encode(entry.mimeType)),
-     tx.pure.u64(entry.sizeBytes), // ← size_bytes first
-     tx.pure.u64(entry.endEpoch), // ← end_epoch second
+     tx.pure.u64(entry.sizeBytes),
+     tx.pure.u64(entry.endEpoch),
      tx.object("0x6"),
    ],
  });
@@ -341,6 +345,21 @@ export async function buildRemoveEntryTx(registryId, blobId) {
 //   const { digest, effects } = await signAndExecuteTransaction(wallet, { transaction });
 //
 // We use the feature directly to avoid another CDN import.
+
+export async function renewBlobStorage(
+  walrusClient,
+  signer,
+  blobObjectId,
+  epochs,
+) {
+  const result = await walrusClient.executeExtendBlobTransaction({
+    blobObjectId,
+    epochs,
+    signer,
+  });
+
+  return result;
+}
 
 /**
  * Sign and execute a Transaction using the connected wallet.
